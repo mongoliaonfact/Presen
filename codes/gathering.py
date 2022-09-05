@@ -1,3 +1,6 @@
+# @author: bbaasan
+# date: 9/5/2022
+# bbaasan@gmu.edu
 import pandas as pd
 import numpy as np
 import yfinance as yfin
