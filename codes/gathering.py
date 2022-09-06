@@ -8,6 +8,9 @@ import certifi
 import json
 import ssl
 import requests
+import warnings
+
+warnings.filterwarnings('ignore')
 
 from datetime import datetime, timedelta
 
@@ -32,7 +35,6 @@ def get_all_transcripts(stock_list, year_list, quarter_list):
             for qtr in quarter_list:
                 stonks = []
                 stonks.append(stock)
-                #                 stonks.append(f'{yr}')
                 try:
 
                     trans, date = get_transcript(stock, yr, qtr)
@@ -47,6 +49,8 @@ def get_all_transcripts(stock_list, year_list, quarter_list):
 
 def calcul_data(df):
     lists = list()
+    df = df.dropna()
+
     for index, row in df.iterrows():
         ticker = row['ticker']
         odor = datetime.strptime(row['ognoo'], '%Y-%m-%d')
@@ -69,16 +73,46 @@ def calcul_data(df):
             sample_delta = np.nan
             vgt_delta = np.nan
             lists.append([sample_delta, vgt_delta])
-    return lists
+    df.loc[:, 'ticker_data'] = lists
+    return df
 
 
-test_tech = ['AAPL', 'AMZN']
-test_quarters= [1, 2, 3, 4]
+# test_tech = ['AAPL', 'AMZN']
+
+test_tech = ['ACIW', 'ACLS', 'AGYS', 'ALRM', 'AAPL', 'AMZN'] #, 'AMBA', 'AMKR', 'AMSWA', 'APPF', 'AAPL', 'AMZN']
+test_quarters = [1, 2, 3, 4]
 test_years = [2017, 2018, 2019, 2020]
 
 scripts = get_all_transcripts(test_tech, test_years, test_quarters)
-#print(scripts)
-ticker_data = calcul_data(scripts)
-scripts.loc[:, 'ticker_data'] = ticker_data
+# print(scripts)
+scripts = calcul_data(scripts)
 
-print(scripts.loc[:, ['ticker', 'ognoo', 'ticker_data']].dropna())
+scripts.loc[:, 'VGT'] = scripts['ticker_data'].apply(lambda x: x[1])
+scripts.loc[:, 'sample'] = scripts['ticker_data'].apply(lambda x: x[0])
+
+# scripts['Better than VGT?'] = (scripts['Ticker Data'] > scripts['VGT']).astype(int)
+
+#print(scripts.columns)
+
+
+# scripts.iloc[:, 4]) scripts.iloc[:, 4])5]])
+
+def better_than_vgt(scripts, col1, col2):
+    ref = list()
+    for index, row in scripts.iterrows():
+        if row[col1] < row[col2]:
+            ref.append(int(1))
+        else:
+            ref.append(int(0))
+    scripts.loc[:, 'better_than_vgt'] = ref
+    return scripts
+
+#print(scripts.head())
+scripts = better_than_vgt(scripts, 'VGT', 'sample')
+
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+
+#scripts.loc[:, ['ticker', 'ognoo', 'VGT', 'sample', 'better_than_vgt']])
+file = 'C:\\Users\\15712\\Desktop\\GMU_Classes\\Year2022\\Fall2022\\NaturalLanguageProcessing\\Presentation2\\data\\scripts.csv'
+# scripts.to_csv(file, header = False, sep = ';', encoding='utf-8')
