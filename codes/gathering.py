@@ -9,6 +9,7 @@ import json
 import ssl
 import requests
 import warnings
+from prettyprinter import pprint
 
 warnings.filterwarnings('ignore')
 
@@ -77,11 +78,23 @@ def calcul_data(df):
     return df
 
 
-# test_tech = ['AAPL', 'AMZN']
+test_tech = ['AAPL', 'CEVA', 'ACIW']
+test_quarters = [1, 2]
+test_years = [2017, 2018]
 
-test_tech = ['ACIW', 'ACLS', 'AGYS', 'ALRM', 'AAPL', 'AMZN'] #, 'AMBA', 'AMKR', 'AMSWA', 'APPF', 'AAPL', 'AMZN']
-test_quarters = [1, 2, 3, 4]
-test_years = [2017, 2018, 2019, 2020]
+#test_tech = ['ACIW', 'ACLS', 'AGYS', 'ALRM', 'AAPL', 'AMZN']
+'''
+test_tech = ['ACIW', 'CEVA', 'CMTL', 'COMM', 'CPSI', 'CRUS', 'CSGS', 'CSOD',
+       'CVLT', 'DCT', 'DGII', 'DIOD', 'DMRC', 'DSGX', 'EBIX', 'EPAY',
+       'ERII', 'EVBG', 'EXTR', 'FEYE', 'FORM', 'LSCC', 'LTRPA', 'MANH',
+       'MARA', 'MDRX', 'MGRC', 'MIDD', 'MITK', 'MTSI', 'NATI', 'NH',
+       'NTCT', 'NTNX', 'NVEC', 'NXGN', 'OMCL', 'OSIS', 'PCTY', 'PDFS',
+       'PEGA', 'SLAB', 'SLP', 'SMCI', 'SMTC', 'SPSC', 'SPWR', 'SSYS',
+       'SWIR', 'SYKE', 'SYNA', 'TCX', 'TRIP', 'TRUE', 'TTEC', 'TTMI',
+       'TWOU', 'UCTT', 'UPLD', 'VECO', 'VIAV']'''
+
+# test_quarters = [1, 2, 3, 4]
+# test_years = [2017, 2018, 2019, 2020]
 
 scripts = get_all_transcripts(test_tech, test_years, test_quarters)
 # print(scripts)
@@ -90,12 +103,6 @@ scripts = calcul_data(scripts)
 scripts.loc[:, 'VGT'] = scripts['ticker_data'].apply(lambda x: x[1])
 scripts.loc[:, 'sample'] = scripts['ticker_data'].apply(lambda x: x[0])
 
-# scripts['Better than VGT?'] = (scripts['Ticker Data'] > scripts['VGT']).astype(int)
-
-#print(scripts.columns)
-
-
-# scripts.iloc[:, 4]) scripts.iloc[:, 4])5]])
 
 def better_than_vgt(scripts, col1, col2):
     ref = list()
@@ -110,9 +117,32 @@ def better_than_vgt(scripts, col1, col2):
 #print(scripts.head())
 scripts = better_than_vgt(scripts, 'VGT', 'sample')
 
-pd.set_option('display.max_rows', None)
-pd.set_option('display.max_columns', None)
 
-#scripts.loc[:, ['ticker', 'ognoo', 'VGT', 'sample', 'better_than_vgt']])
-file = 'C:\\Users\\15712\\Desktop\\GMU_Classes\\Year2022\\Fall2022\\NaturalLanguageProcessing\\Presentation2\\data\\scripts.csv'
-# scripts.to_csv(file, header = False, sep = ';', encoding='utf-8')
+import matplotlib.pyplot as plt
+import textstat
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, train_test_split, GridSearchCV, KFold
+from sklearn.metrics import confusion_matrix, average_precision_score, recall_score, precision_score,log_loss, make_scorer, roc_curve, plot_roc_curve, precision_score, auc
+plt.style.use('ggplot')
+
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from nltk.tokenize import RegexpTokenizer
+
+# print(scripts)
+scripts.loc[:, 'GunningFog'] = scripts.loc[:, 'transcript'].apply(textstat.gunning_fog)
+scripts.loc[:, 'LexiconCount'] = scripts.loc[:, 'transcript'].apply(textstat.lexicon_count)
+scripts.loc[:, 'SmogIndex'] = scripts.loc[:, 'transcript'].apply(textstat.smog_index)
+
+#pd.set_option('display.max_columns', None)
+#pprint(scripts)
+
+count = scripts.groupby('better_than_vgt').count()
+pprint(count)
+
+fig, ax = plt.subplots()
+ax.bar(count.ticker.index, count.ticker, label = 'beat_vgt', width = .2)
+ax.set_title('Small to Mid sized tech companies that beat the VGT')
+ax.set_ylabel('Number of Earning Transripts')
+ax.legend()
+plt.show()
